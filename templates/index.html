@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>EMI Calculator - Loan EMI Calculator with Full Schedule</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">
+                <span class="icon">🏦</span>
+                EMI Calculator
+            </h1>
+            <p class="subtitle">Calculate your Equated Monthly Installments with Full Payment Schedule</p>
+        </header>
+
+        <div class="calculator-wrapper">
+            <div class="calculator-card">
+                <form id="emiForm" class="emi-form">
+                    <div class="form-group">
+                        <label for="principal" class="form-label">
+                            <span class="label-icon">💰</span>
+                            Loan Amount (₹)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="principal" 
+                            name="principal" 
+                            class="form-input" 
+                            placeholder="Enter loan amount"
+                            min="1000"
+                            step="1000"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="annual_rate" class="form-label">
+                            <span class="label-icon">📊</span>
+                            Annual Interest Rate (%)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="annual_rate" 
+                            name="annual_rate" 
+                            class="form-input" 
+                            placeholder="Enter interest rate"
+                            min="0.1"
+                            step="0.1"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tenure_years" class="form-label">
+                            <span class="label-icon">📅</span>
+                            Loan Tenure (Years)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="tenure_years" 
+                            name="tenure_years" 
+                            class="form-input" 
+                            placeholder="Enter loan tenure"
+                            min="1"
+                            step="1"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="calculate-btn" id="calculateBtn">
+                        <span class="btn-icon">🧮</span>
+                        Calculate EMI & Schedule
+                    </button>
+                </form>
+
+                <div id="loadingSpinner" class="loading-spinner hidden">
+                    <div class="spinner"></div>
+                    <p>Calculating EMI Schedule...</p>
+                </div>
+
+                <div id="errorMessage" class="error-message hidden"></div>
+            </div>
+
+            <div id="resultsCard" class="results-card hidden">
+                <h2 class="results-title">
+                    <span class="results-icon">📈</span>
+                    EMI Calculation Results
+                </h2>
+                
+                <div class="results-grid">
+                    <div class="result-item primary">
+                        <div class="result-label">Monthly EMI</div>
+                        <div class="result-value" id="emiAmount">₹0</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Total Amount Payable</div>
+                        <div class="result-value" id="totalAmount">₹0</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Total Interest</div>
+                        <div class="result-value" id="totalInterest">₹0</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Principal Amount</div>
+                        <div class="result-value" id="principalAmount">₹0</div>
+                    </div>
+                </div>
+
+                <div class="loan-summary">
+                    <h3>Loan Summary</h3>
+                    <div class="summary-item">
+                        <span>Loan Duration:</span>
+                        <span id="loanDuration">0 months</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Interest Percentage:</span>
+                        <span id="interestPercentage">0%</span>
+                    </div>
+                </div>
+
+                <button class="recalculate-btn" onclick="resetCalculator()">
+                    <span class="btn-icon">🔄</span>
+                    Calculate Again
+                </button>
+            </div>
+        </div>
+
+        <!-- EMI Schedule/Chart Section -->
+        <div id="scheduleCard" class="schedule-card hidden">
+            <div class="schedule-header">
+                <h2 class="schedule-title">
+                    <span class="schedule-icon">📋</span>
+                    Complete EMI Payment Schedule
+                </h2>
+                <div class="schedule-controls">
+                    <button id="downloadBtn" class="download-btn">
+                        <span class="btn-icon">📥</span>
+                        Download Schedule
+                    </button>
+                    <div class="view-toggle">
+                        <button id="yearlyViewBtn" class="toggle-btn">Yearly View</button>
+                        <button id="monthlyViewBtn" class="toggle-btn active">Monthly View</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="schedule-summary">
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Payments:</span>
+                        <span class="stat-value" id="totalPayments">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Principal:</span>
+                        <span class="stat-value" id="totalPrincipalPaid">₹0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Interest:</span>
+                        <span class="stat-value" id="totalInterestPaid">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="schedule-table-container">
+                <table class="schedule-table" id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>EMI Amount</th>
+                            <th>Principal</th>
+                            <th>Interest</th>
+                            <th>Remaining Balance</th>
+                            <th>Total Interest Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        <!-- Schedule rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="yearlySchedule" class="yearly-schedule hidden">
+                <div id="yearlyScheduleContent">
+                    <!-- Yearly summary will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2024 EMI Calculator with Full Schedule. Built with Flask & JavaScript.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
